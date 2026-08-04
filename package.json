@@ -1,0 +1,31 @@
+{
+  "name": "engine-bot-wa",
+  "version": "1.0.0",
+  "description": "Minimalist and High-Performance WhatsApp Bot Engine built on Baileys",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "baileys",
+    "engine",
+    "whatsapp-bot",
+    "open-source"
+  ],
+  "author": "Mikorayuki",
+  "license": "MIT",
+  "dependencies": {
+    "@hapi/boom": "^10.0.1",
+    "baileys": "git+https://github.com/Konaimav2/baileys.git",
+    "chalk": "^5.3.0",
+    "dotenv": "^16.4.5",
+    "pino": "^8.19.0",
+    "qrcode-terminal": "^0.12.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
