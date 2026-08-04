@@ -5,6 +5,14 @@ import chalk from 'chalk';
 import readline from 'readline';
 import config from './config.js';
 
+process.on('uncaughtException', (err) => {
+    console.error(chalk.red('[!] Uncaught Exception:'), err.message || err);
+});
+
+process.on('unhandledRejection', (reason) => {
+    console.error(chalk.yellow('[!] Unhandled Rejection:'), reason);
+});
+
 const logger = pino({ level: 'silent' });
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 const question = (text) => new Promise((resolve) => rl.question(text, resolve));
@@ -21,14 +29,21 @@ async function startEngine() {
             creds: state.creds,
             keys: makeCacheableSignalKeyStore(state.keys, logger)
         },
-        browser: ['Ubuntu', 'Chrome', '20.0.04']
+        browser: ['Ubuntu', 'Chrome', '20.0.04'],
+        markOnlineOnConnect: true,
+        generateHighQualityLinkPreview: true,
+        syncFullHistory: false
     });
 
     if (config.usePairingCode && !socket.authState.creds.registered) {
         const phoneNumber = await question(chalk.yellow('[?] Enter WhatsApp Number (e.g. 628xxx): '));
         const cleanNumber = phoneNumber.replace(/[^0-9]/g, '');
-        const code = await socket.requestPairingCode(cleanNumber);
-        console.log(chalk.green(`[+] Pairing Code: `) + chalk.bgGreen.black.bold(` ${code} `));
+        if (cleanNumber.length > 5) {
+            setTimeout(async () => {
+                const code = await socket.requestPairingCode(cleanNumber);
+                console.log(chalk.green(`[+] Pairing Code: `) + chalk.bgGreen.black.bold(` ${code} `));
+            }, 3000);
+        }
     }
 
     socket.ev.on('creds.update', saveCreds);
@@ -36,12 +51,14 @@ async function startEngine() {
     socket.ev.on('connection.update', (update) => {
         const { connection, lastDisconnect } = update;
         if (connection === 'close') {
-            const shouldReconnect = (lastDisconnect?.error instanceof Boom)
-                ? lastDisconnect.error.output?.statusCode !== DisconnectReason.loggedOut
-                : true;
-            console.log(chalk.red('[!] Connection closed. Reconnecting:'), shouldReconnect);
+            const statusCode = (lastDisconnect?.error instanceof Boom)
+                ? lastDisconnect.error.output?.statusCode
+                : null;
+            const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+
+            console.log(chalk.red(`[!] Connection status closed (${statusCode || 'Unknown'}). Reconnecting: ${shouldReconnect}`));
             if (shouldReconnect) {
-                startEngine();
+                setTimeout(startEngine, 3000);
             }
         } else if (connection === 'open') {
             console.log(chalk.green(`[+] ${config.botName} Engine Connected Successfully!`));
@@ -55,11 +72,13 @@ async function startEngine() {
 
             const from = msg.key.remoteJid;
             const messageType = Object.keys(msg.message)[0];
-            const body = (messageType === 'conversation')
-                ? msg.message.conversation
-                : (messageType === 'extendedTextMessage')
-                    ? msg.message.extendedTextMessage.text
-                    : '';
+
+            let body = '';
+            if (messageType === 'conversation') {
+                body = msg.message.conversation;
+            } else if (messageType === 'extendedTextMessage') {
+                body = msg.message.extendedTextMessage.text;
+            }
 
             if (!body) return;
 
@@ -72,12 +91,15 @@ async function startEngine() {
 
             if (command === 'ping') {
                 const startTime = Date.now();
-                await socket.sendMessage(from, { text: '🏓 Testing ping...' }, { quoted: msg });
+                const sentMsg = await socket.sendMessage(from, { text: '🏓 Testing ping...' }, { quoted: msg });
                 const speed = Date.now() - startTime;
-                await socket.sendMessage(from, { text: ` Pong! 🏓\n Speed: *${speed} ms*` }, { quoted: msg });
+
+                if (sentMsg) {
+                    await socket.sendMessage(from, { text: `Pong! 🏓\nSpeed: *${speed} ms*` }, { quoted: msg });
+                }
             }
         } catch (err) {
-            console.error(chalk.red('[!] Error handling message:'), err);
+            console.error(chalk.red('[!] Error handling message:'), err.message || err);
         }
     });
 }

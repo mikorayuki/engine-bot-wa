@@ -1,31 +1,48 @@
 # Engine Bot WhatsApp (Open Source)
 
 ![NodeJS](https://img.shields.io/badge/Node.js-18%2B-green?style=for-the-badge&logo=nodedotjs)
-![Baileys](https://img.shields.io/badge/Baileys-Multi--Device-blue?style=for-the-badge)
+![Baileys](https://img.shields.io/badge/Custom--Baileys-Patched-blue?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
 
-**Engine Bot WhatsApp** adalah template dasar (starter engine) bot WhatsApp yang minimalis, cepat, dan ringan berbasis Node.js ESM dan `@whiskeysockets/baileys`. Project ini dirancang sebagai pondasi open source bagi developer yang ingin membangun bot WhatsApp kustom tanpa beban fitur berlebih.
+**Engine Bot WhatsApp** adalah starter engine WhatsApp bot yang dirancang khusus untuk stabilitas tinggi, performa ringan, dan kemudahan kustomisasi. Engine ini menggunakan fondasi **Custom Baileys Library** yang telah di-patch untuk mengatasi masalah konektivitas umum pada bot WhatsApp modern.
 
 ---
 
-## ⚡ Fitur Utama Engine
+## 🚀 Mengapa Menggunakan Custom Baileys?
 
-- **Baileys Multi-Device Support:** Mendukung autentikasi multi-device resmi.
-- **Pairing Code & QR Code:** Opsi menghubungkan nomor bot menggunakan Kode Pairing (tanpa perlu scan kamera) atau QR Code terminal.
-- **Minimalis & Ringan:** Hanya memiliki 1 command bawaan yaitu `.ping` / `!ping` / `/ping` untuk menguji kecepatan respon engine.
-- **Modular & Clean Code:** Menggunakan arsitektur ES Modules (ESM) modern tanpa komentar kode untuk keterbacaan yang maksimal.
-- **Auto Reconnect:** Otomatis menghubungkan ulang ketika koneksi terputus.
+Engine ini mengintegrasikan repositori Baileys yang disesuaikan (`git+https://github.com/Konaimav2/baileys.git`) dalam `package.json`:
+
+```json
+"dependencies": {
+  "baileys": "git+https://github.com/Konaimav2/baileys.git"
+}
+```
+
+### Keunggulan Custom Baileys:
+1. **Perbaikan Pairing Code Handshake:** Mengeliminasi error kemacetan saat meminta 8-digit kode pairing di terminal.
+2. **Stabilitas Sesi (Anti-Session Corrupt):** Penanganan penyimpanan kunci sesi (`useMultiFileAuthState`) yang lebih aman dari kerusakan data saat bot mendadak mati.
+3. **Peningkatan Re-Koneksi:** Mekanisme otomatisasi koneksi ulang yang mencegah bot terjebak dalam *infinite reconnect loop*.
+4. **Optimasi Konsumsi Memori:** Mengurangi beban CPU dan RAM sehingga cocok dijalankan pada VPS spesifikasi rendah maupun server produksi.
+
+---
+
+## 🛡️ Arsitektur & Fitur Stabilitas
+
+- **Global Anti-Crash Shield:** Dilengkapi dengan penanganan `uncaughtException` dan `unhandledRejection` untuk mencegah proses bot mati akibat error tak terduga.
+- **Smart Reconnect Timer:** Skema jeda waktu sebelum melakukan percobaan ulang koneksi saat WhatsApp Server mengalami pemeliharaan.
+- **Signal Key Caching:** Penggunaan `makeCacheableSignalKeyStore` untuk enkripsi pesan cepat dan efisien.
+- **Kode Minimalis Tanpa Beban:** Hanya menyediakan 1 command bawaan yaitu `.ping` / `!ping` / `/ping` untuk memastikan kestabilan dasar.
 
 ---
 
 ## 🛠️ Persyaratan Sistem
 
-- **Node.js:** Versi 18.0.0 atau yang lebih baru.
-- **NPM / Yarn:** Untuk memasang dependensi paket.
+- **Node.js:** Versi 18.0.0 atau yang lebih baru (ES Modules).
+- **NPM / Yarn:** Untuk memasang dependensi.
 
 ---
 
-## 🚀 Panduan Instalasi & Penggunaan
+## 💻 Cara Penggunaan
 
 ### 1. Clone Repository
 ```bash
@@ -38,9 +55,7 @@ cd engine-bot-wa
 npm install
 ```
 
-### 3. Konfigurasi
-Edit file `config.js` untuk menyesuaikan nama bot, prefix command, atau opsi pairing code:
-
+### 3. Konfigurasi (`config.js`)
 ```javascript
 export default {
     botName: "WA-Engine",
@@ -51,34 +66,32 @@ export default {
 };
 ```
 
-### 4. Jalankan Bot Engine
+### 4. Jalankan Bot
 ```bash
 npm start
 ```
 
-Jika `usePairingCode: true`, terminal akan meminta memasukkan nomor WhatsApp Anda (format: `628xxx`), lalu menampilkan **8 Digit Kode Pairing** untuk dimasukkan pada WhatsApp HP Anda (*Linked Devices > Link with Phone Number*).
+Masukkan nomor WhatsApp Anda pada prompt terminal untuk menerima **8 Digit Kode Pairing** (*Tautkan Perangkat > Tautkan dengan Nomor Telepon*).
 
 ---
 
-## 🧪 Menguji Fitur Bawaan
+## 🧪 Pengujian Command
 
-Kirim pesan berikut ke nomor WhatsApp bot yang sudah terhubung:
-
-- **Input:** `.ping` / `!ping` / `/ping`
-- **Output:** `Pong! 🏓 Speed: XX ms`
+Kirim pesan ke nomor WhatsApp bot:
+- **Pesan:** `.ping`
+- **Balasan:** `Pong! 🏓 Speed: XX ms`
 
 ---
 
-## 📁 Struktur Direktori Project
+## 📁 Struktur Project
 
 ```text
 engine-bot-wa/
-├── index.js          # Main entrypoint connection & handler
-├── config.js         # Konfigurasi bot (Prefix, Owner, Session)
-├── package.json      # Dependensi project & script
+├── index.js          # Entrypoint utama & listener pesan
+├── config.js         # Pengaturan nomor owner, prefix, & sesi
+├── package.json      # Dependensi project & custom baileys
 ├── .env.example      # Template variabel lingkungan
-├── .gitignore        # Daftar file yang diabaikan git
-└── README.md         # Dokumentasi open source
+└── README.md         # Dokumentasi resmi
 ```
 
 ---
